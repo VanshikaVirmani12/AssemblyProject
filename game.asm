@@ -35,6 +35,8 @@
 #####################################################################
 
 .eqv BASE_ADDRESS 0x10008000
+.eqv PLAYER1 0x10008000
+
 
 .data
 
@@ -43,29 +45,26 @@ Array:    .word   0:10
 
 .text
 li $t0, BASE_ADDRESS # $t0 stores the base address for display
-li $t1, 0xff0000 # $t1 stores the red colour code
-li $t2, 0x00ff00 # $t2 stores the green colour code
-li $t3, 0x0000ff # $t3 stores the blue colour code
-li $t4, 0xeeb882 #t4 for mustard
-li $t5, 0xb4b7b4 #t5 for grey 
-
-li $t7, 0x9c9cf3 #t7 for nice blue
-li $t8, 0x000000 #$t8 for black 
-
-main:		
-la $t9, A #t9 = addr(A)
-add $t6, $zero, $zero 	#$t0 holds i = 0
+.eqv COLOR_RED 0xff0000
+.eqv COLOR_GREEN 0x00ff00
+.eqv COLOR_BLUE 0x00ff00
+.eqv COLOR_MUSTARD 0xeeb882
+.eqv COLOR_GREY 0xb4b7b4
+.eqv COLOR_PLAYER_BLUE 0x00aaff
+.eqv COLOR_BLACK 0x000000
+.eqv COLOR_PINK 0xffaaff
 
 # address(x,y) = (y * 64 + x) * 4
 
+li $t7, COLOR_PLAYER_BLUE
 # PLAYER 1
 # address of player bottom left: (x, y) = 10, 40, so address = (40 * 64 + 10) * 4 = 10280
 sw $t7, 10280($t0) # paint the first (bottom-left) unit red.
 sw $t7, 10284($t0)
 sw $t7, 10288($t0)
-sw $t2, 10024($t0) # paint the first middle left (x, y) = 10, 39 green, so address = (39 * 64 + 10) * 4 = 10024
-sw $t2, 10028($t0)
-sw $t2, 10032($t0)
+sw $t7, 10024($t0) # paint the first middle left (x, y) = 10, 39 green, so address = (39 * 64 + 10) * 4 = 10024
+sw $t7, 10028($t0)
+sw $t7, 10032($t0)
 sw $t7, 9768($t0) # paint the first middle left (x, y) = 10, 38 blue, so address = (38 * 64 + 10) * 4 = 9768
 sw $t7, 9772($t0)
 sw $t7, 9776($t0)
@@ -75,6 +74,8 @@ addi $t6, $t0, 9768
 
 #PLATFORM 1
 #address = (9, 41) 
+
+li $t4, COLOR_MUSTARD
 
 sw $t4, 10532($t0) # paint the first (bottom-left) unit red.
 sw $t4, 10536($t0) 
@@ -98,10 +99,12 @@ sw $t4, 11700($t0) # paint the first (bottom-left) unit red.
 sw $t4, 11704($t0) 
 sw $t4, 11708($t0) 
 sw $t4, 11712($t0) 
-sw $t4, 11716($t0) 
+sw $t4, 11716($t0)
 
 #Object 1: Enemy
 #address = (46, 44) 
+
+li $t5, COLOR_RED
 
 sw $t5, 11448($t0) # paint the first (bottom-left) unit red.
 sw $t5, 11452($t0) 
@@ -113,9 +116,10 @@ sw $t5, 10936($t0) # paint the first (bottom-left) unit red.
 sw $t5, 10940($t0) 
 sw $t5, 10944($t0) 
 
-
 #Object 2: Power Up 
 #address = (23, 51) 
+
+li $t2, COLOR_GREEN
 
 sw $t2, 13148($t0) # paint the first (bottom-left) unit red.
 sw $t2, 13156($t0) 
@@ -135,52 +139,42 @@ lw $t8, 0($t9)
 beq $t8, 1, keypress_happened
 
 keypress_happened:
-lw $t2, 4($t9) # this assumes $t9 is set to 0xfff0000 from before
-beq $t2, 0x61, respond_to_a # ASCII code of 'a' is 0x61 or 97 in decimal
-beq $t2, 0x64, respond_to_d
+lw $t3, 4($t9) # this assumes $t9 is set to 0xfff0000 from before
+beq $t3, 0x61, respond_to_a # ASCII code of 'a' is 0x61 or 97 in decimal
+beq $t3, 0x64, respond_to_d
 
 respond_to_a: #move left
 
-
-addi, $t9, $t9, -12
-bge $t9, $zero, move_left
+addi, $t6, $t6, -12
+bge $t6, $zero, move_left
 
 move_left: 
 
+li $t1, COLOR_BLACK
 #color old pixels black 
-sw $t8, 12($t9) 
-sw $t8, 16($t9)
-sw $t8, 20($t9)
-sw $t8, 304($t9)
-sw $t8, 308($t9)
-sw $t8, 312($t9)
-sw $t8, 560($t9) 
-sw $t8, 564($t9)
-sw $t8, 568($t9)
+sw $t1, 12($t6) 
+sw $t1, 16($t6)
+sw $t1, 20($t6)
+sw $t1, 304($t6)
+sw $t1, 308($t6)
+sw $t1, 312($t6)
+sw $t1, 560($t6) 
+sw $t1, 564($t6)
+sw $t1, 568($t6)
 
 #color new pixels blue
-sw $t7, 0($t9) 
-sw $t7, 4($t9)
-sw $t7, 8($t9)
-sw $t2, 256($t9)
-sw $t2, 260($t9)
-sw $t2, 264($t9)
-sw $t7, 512($t9)
-sw $t7, 516($t9)
-sw $t7, 520($t9)
+sw $t7, 0($t6) 
+sw $t7, 4($t6)
+sw $t7, 8($t6)
+sw $t7, 256($t6)
+sw $t7, 260($t6)
+sw $t7, 264($t6)
+sw $t7, 512($t6)
+sw $t7, 516($t6)
+sw $t7, 520($t6)
 
 respond_to_d: #move right
 
 
-
 li $v0, 10 # terminate the program gracefully
 syscall
-
-
-
-
-
-
-
-
-
