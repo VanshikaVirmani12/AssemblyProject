@@ -33,18 +33,20 @@
 # - (write here, if any)
 #
 #####################################################################
-
 .eqv BASE_ADDRESS 0x10008000
-.eqv PLAYER1 0x10008000
-
+.eqv PLAYER1 0x1000A62C
+.eqv CHECK_KEY 0xffff0000
+.eqv LAST_ADDRESS 0x1000BDFC
+.eqv WAIT_CLOCK 200
 
 .data
 
-Array:    .word   0:10
-
-
 .text
 li $t0, BASE_ADDRESS # $t0 stores the base address for display
+li $s7, LAST_ADDRESS
+li $s6, WAIT_CLOCK
+.eqv COLOR_RED 0xff0000
+.eqv COLOR_PLAYER_BLUE 0x00aaff
 .eqv COLOR_RED 0xff0000
 .eqv COLOR_GREEN 0x00ff00
 .eqv COLOR_BLUE 0x00ff00
@@ -54,127 +56,157 @@ li $t0, BASE_ADDRESS # $t0 stores the base address for display
 .eqv COLOR_BLACK 0x000000
 .eqv COLOR_PINK 0xffaaff
 
-# address(x,y) = (y * 64 + x) * 4
 
-li $t7, COLOR_PLAYER_BLUE
-# PLAYER 1
-# address of player bottom left: (x, y) = 10, 40, so address = (40 * 64 + 10) * 4 = 10280
-sw $t7, 10280($t0) # paint the first (bottom-left) unit red.
-sw $t7, 10284($t0)
-sw $t7, 10288($t0)
-sw $t7, 10024($t0) # paint the first middle left (x, y) = 10, 39 green, so address = (39 * 64 + 10) * 4 = 10024
-sw $t7, 10028($t0)
-sw $t7, 10032($t0)
-sw $t7, 9768($t0) # paint the first middle left (x, y) = 10, 38 blue, so address = (38 * 64 + 10) * 4 = 9768
-sw $t7, 9772($t0)
-sw $t7, 9776($t0)
+main: 
+	li $s1, PLAYER1			#s1 stores player location 
+	li $s0, BASE_ADDRESS
+	
+	li $s3, 0 #Collision flag
 
-#store address of Player 1 in register 
-addi $t6, $t0, 9768
+	initialise_object: 
+	
+	#draw player
+	li $t7, COLOR_PLAYER_BLUE
+	sw $t7, 0($s1) #color blue
+	sw $t7, 256($s1)
+	sw $t7, 512($s1)
+	
+	#PLATFORM 1
+	#address = (9, 41) 
 
-#PLATFORM 1
-#address = (9, 41) 
+	li $t4, COLOR_MUSTARD
 
-li $t4, COLOR_MUSTARD
+	sw $t4, 10532($t0) # paint the first (bottom-left) unit mustard.
+	sw $t4, 10536($t0) 
+	sw $t4, 10540($t0)
+	sw $t4, 10544($t0) 
+	sw $t4, 10548($t0) 
+	sw $t4, 10552($t0) 
+	sw $t4, 10556($t0)
+	sw $t4, 10560($t0)
+		
+		#PLATFORM 2
+	#address = (12, 52) 
 
-sw $t4, 10532($t0) # paint the first (bottom-left) unit red.
-sw $t4, 10536($t0) 
-sw $t4, 10540($t0)
-sw $t4, 10544($t0) 
-sw $t4, 10548($t0) 
+	#sw $t4, 13400($t0) # paint the first (bottom-left) unit red.
 
-#PLATFORM 2
-#address = (22, 52) 
+	sw $t4, 13368($t0) 
+	sw $t4, 13372($t0) 
+	sw $t4, 13376($t0)
+	sw $t4, 13380($t0) 
+	sw $t4, 13384($t0) 
+	sw $t4, 13388($t0)
+	sw $t4, 13392($t0)
+	sw $t4, 13404($t0) 
+	sw $t4, 13408($t0) 
+	sw $t4, 13412($t0) 
+	sw $t4, 13416($t0) 
+	sw $t4, 13420($t0) 
+	sw $t4, 13424($t0) 
 
-sw $t4, 13400($t0) # paint the first (bottom-left) unit red.
-sw $t4, 13404($t0) 
-sw $t4, 13408($t0) 
-sw $t4, 13412($t0) 
-sw $t4, 13416($t0) 
+	#PLATFORM 3
+	#address = (45, 45) 
 
-#PLATFORM 3
-#address = (45, 45) 
+	sw $t4, 11700($t0) # paint the first (bottom-left) unit red.
+	sw $t4, 11704($t0) 
+	sw $t4, 11708($t0) 
+	sw $t4, 11712($t0) 
+	sw $t4, 11716($t0)
+	sw $t4, 11720($t0)
+	sw $t4, 11724($t0)
+	sw $t4, 11728($t0)
+	
+	main_loop:
+	
+	check_player_falling: 
+	# $s1 stores current player addrress
+	# $t4 stores value of 3 rows below current player
+	
+	#check if player is currently standing on platform, if not, branch to falling
+	addi $t4, $zero, 768
+	add $t4, $t4, $s1
+	lw $t4, 0($t4)
+	bne $t4, 0xeeb882, falling
+	
+	#check key input from users
+	li $a3, CHECK_KEY
+	lw $s4, 0($a3)	
+	bne $s4, 1, main_loop    	#check if $t9 is 1, that means key has been pressed
+	b keypress
 
-sw $t4, 11700($t0) # paint the first (bottom-left) unit red.
-sw $t4, 11704($t0) 
-sw $t4, 11708($t0) 
-sw $t4, 11712($t0) 
-sw $t4, 11716($t0)
+	main_draw: 
+	move $a2, $s1
+	b erase_player
+	
+	b main_loop
+	
+	end: 
+	li $v0, 10								
+	syscall
 
-#Object 1: Enemy
-#address = (46, 44) 
+erase_player: 
+	li $t7, COLOR_BLACK
+	sw $t7, 0($s0) 
+	sw $t7, 256($s0)
+	sw $t7, 512($s0)
 
-li $t5, COLOR_RED
+draw_player:
+	li $t7, COLOR_PLAYER_BLUE
+	sw $t7, 0($a2) #color blue
+	sw $t7, 256($a2)
+	sw $t7, 512($a2)
+	
+	sleep:
+	li $v0, 32
+	li $a0, 200
+	syscall
+	
+	b main_loop
 
-sw $t5, 11448($t0) # paint the first (bottom-left) unit red.
-sw $t5, 11452($t0) 
-sw $t5, 11456($t0) 
-sw $t5, 11192($t0) 
-sw $t5, 11196($t0) 
-sw $t5, 11200($t0)
-sw $t5, 10936($t0) # paint the first (bottom-left) unit red.
-sw $t5, 10940($t0) 
-sw $t5, 10944($t0) 
+falling: 
+	# no platform under the player, fall
+	#check if we're on the bottom-most row
+	#bgt $s1, $s7, end
 
-#Object 2: Power Up 
-#address = (23, 51) 
+	move $s0, $s1
+	addi $s1, $s1, 256
+	move $a2, $s1
+	b erase_player
+	
+keypress: 
 
-li $t2, COLOR_GREEN
+	lw $s4, 4($a3)
+	beq $s4, 0x61, respond_to_a # ASCII code of 'a' is 0x61 or 97 in decimal
+	beq $s4, 0x64, respond_to_d
+	
+respond_to_a:
+	li $t1, 256
+	div $s1, $t1
+	mfhi $t9
+	li $t2, 4
+	beq $t9, $zero, main_loop
+	beq $t9, $t2, main_loop
+	move $s0, $s1 #Store old position in $s0
+	addi $s1, $s1, -8
+	move $a2, $s1
+	b erase_player
+	b main_loop
+	
+respond_to_d:
+	li $t1, 256
+	li $t2, 252
+	li $t3, 248
+	div $s1, $t1
+	mfhi $t9
+	beq $t9, $t2, main_loop
+	beq $t9, $t3, main_loop
+	move $s0, $s1 #Store old position in $s0
+	addi $s1, $s1, 8
+	move $a2, $s1
+	b erase_player
+	b main_loop
+	
+keypress_done: 
 
-sw $t2, 13148($t0) # paint the first (bottom-left) unit red.
-sw $t2, 13156($t0) 
-#sw $t2, 11456($t0) 
-sw $t2, 12892($t0) 
-#sw $t2, 11196($t0) 
-sw $t2, 12900($t0)
-sw $t2, 12636($t0) # paint the first (bottom-left) unit red.
-sw $t2, 12640($t0) 
-sw $t2, 12644($t0) 
-
-#MILESTONE 2
-
-#Player Movement
-li $t9, 0xffff0000
-lw $t8, 0($t9)
-beq $t8, 1, keypress_happened
-
-keypress_happened:
-lw $t3, 4($t9) # this assumes $t9 is set to 0xfff0000 from before
-beq $t3, 0x61, respond_to_a # ASCII code of 'a' is 0x61 or 97 in decimal
-beq $t3, 0x64, respond_to_d
-
-respond_to_a: #move left
-
-addi, $t6, $t6, -12
-bge $t6, $zero, move_left
-
-move_left: 
-
-li $t1, COLOR_BLACK
-#color old pixels black 
-sw $t1, 12($t6) 
-sw $t1, 16($t6)
-sw $t1, 20($t6)
-sw $t1, 304($t6)
-sw $t1, 308($t6)
-sw $t1, 312($t6)
-sw $t1, 560($t6) 
-sw $t1, 564($t6)
-sw $t1, 568($t6)
-
-#color new pixels blue
-sw $t7, 0($t6) 
-sw $t7, 4($t6)
-sw $t7, 8($t6)
-sw $t7, 256($t6)
-sw $t7, 260($t6)
-sw $t7, 264($t6)
-sw $t7, 512($t6)
-sw $t7, 516($t6)
-sw $t7, 520($t6)
-
-respond_to_d: #move right
-
-
-li $v0, 10 # terminate the program gracefully
-syscall
+	
+	
