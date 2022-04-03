@@ -181,6 +181,7 @@ keypress:
 	lw $s4, 4($a3)
 	beq $s4, 0x61, respond_to_a # ASCII code of 'a' is 0x61 or 97 in decimal
 	beq $s4, 0x64, respond_to_d
+	beq $s4, 0x77, respond_to_w
 	
 respond_to_a:
 	li $t1, 256
@@ -205,6 +206,14 @@ respond_to_d:
 	beq $t9, $t3, main_loop
 	move $s0, $s1 #Store old position in $s0
 	addi $s1, $s1, 8
+	move $a2, $s1
+	b erase_player
+	b main_loop
+	
+respond_to_w:
+	ble $s1, $t0, main_loop #to check if the player is already in the first row, can't go more up
+	move $s0, $s1 #Store old position in $s0
+	addi $s1, $s1, -2560
 	move $a2, $s1
 	b erase_player
 	b main_loop
