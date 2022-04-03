@@ -129,6 +129,7 @@ main:
 	bne $t4, 0xeeb882, falling
 	
 	#check key input from users
+	check_key:
 	li $a3, CHECK_KEY
 	lw $s4, 0($a3)	
 	bne $s4, 1, main_loop    	#check if $t9 is 1, that means key has been pressed
@@ -160,6 +161,8 @@ draw_player:
 	li $v0, 32
 	li $a0, 200
 	syscall
+	
+	b check_key
 	
 	b main_loop
 
