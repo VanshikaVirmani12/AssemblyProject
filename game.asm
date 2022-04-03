@@ -212,13 +212,20 @@ respond_to_d:
 	
 respond_to_w:
 	ble $s1, $t0, main_loop #to check if the player is already in the first row, can't go more up
+	# if player is not standing on a platform, don't allow for jump
+	addi $t4, $zero, 768
+	add $t4, $t4, $s1
+	lw $t4, 0($t4)
+	bne $t4, 0xeeb882, main_loop
+	
 	move $s0, $s1 #Store old position in $s0
-	addi $s1, $s1, -2560
+	addi $s1, $s1, -3840
 	move $a2, $s1
 	b erase_player
 	b main_loop
 	
 keypress_done: 
+
 
 	
 	
