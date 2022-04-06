@@ -40,7 +40,7 @@
 .eqv WAIT_CLOCK 200
 .eqv LOWER_JUMP -3840
 .eqv HIGHER_JUMP -7680
-.eqv LOWEST_JUMP -1792
+.eqv LOWEST_JUMP -2560
 .eqv STARTING_POWER_UP 0x1000B164
 .eqv STARTING_ENEMY 0x1000AAC4
 
@@ -92,12 +92,12 @@ li $t6, BASE_ADDRESS
 	sw $t7, 0($s1) #color blue
 	sw $t7, 256($s1)
 	sw $t7, 512($s1)
-	sw $t7, 0($s1) #color blue
-	sw $t7, 256($s1)
-	sw $t7, 512($s1)
-	sw $t7, 0($s1) #color blue
-	sw $t7, 256($s1)
-	sw $t7, 512($s1)
+	sw $t7, 4($s1) #color blue
+	sw $t7, 260($s1)
+	sw $t7, 516($s1)
+	sw $t7, 8($s1) #color blue
+	sw $t7, 264($s1)
+	sw $t7, 520($s1)
 	
 	
 	#PLATFORM 1
@@ -153,10 +153,11 @@ li $t6, BASE_ADDRESS
 	li $t5, COLOR_RED
 	li $s2, STARTING_ENEMY
 	
-	sw $t5, 10948($t0) 
+	sw $t5, 10944($t0) 
+	sw $t5, 10952($t0) 
 	sw $t5, 11204($t0)
-	sw $t5, 11460($t0) 
-
+	sw $t5, 11456($t0) 
+	sw $t5, 11464($t0)
 	
 	#Object 2: Power Up 
 	#address = (23, 51) 
@@ -166,6 +167,8 @@ li $t6, BASE_ADDRESS
 	
 	sw $t2, 12644($t0) 
 	sw $t2, 12900($t0)
+	sw $t2, 12896($t0)
+	sw $t2, 12904($t0)
 	sw $t2, 13156($t0)
 	
 	main_loop:
@@ -177,25 +180,58 @@ li $t6, BASE_ADDRESS
 	#check if player is currently standing on platform, if not, branch to falling
 	
 	bge $s1, $s7, end
+	
+	check_platform:
 	addi $t4, $zero, 768
+	addi $t4, $t4, 8
 	add $t4, $t4, $s1
 	lw $t4, 0($t4)
-	bne $t4, 0xeeb882, falling
+	
+	addi $t3, $zero, 768
+	add $t3, $t3, $s1
+	lw $t3, 0($t3)
+	
+	beq $t4, COLOR_MUSTARD, check_collision
+	beq $t3, COLOR_MUSTARD, check_collision
+	
+	falling_condition:
+	b falling
 	
 	#check for collision
 	check_collision:
 	addi $s5, $s1, 4
 	beq $s5, $s3, power_up
+	addi $s5, $s1, 12
+	beq $s5, $s3, power_up
+	addi $s5, $s1, 8
+	beq $s5, $s3, power_up
 	move $s5, $s1
 	beq $s5, $s3, power_up
 	addi $s5, $s1, 768
 	beq $s5, $s3, power_up
+	addi $s5, $s1, 4
+	addi $s5, $s5, 768
+	beq $s5, $s3, power_up
+	addi $s5, $s1, 8
+	addi $s5, $s5, 768
+	beq $s5, $s3, power_up
+	
 	
 	addi $s5, $s1, 4
 	beq $s5, $s2, enemy_trap
+	addi $s5, $s1, 8
+	beq $s5, $s2, enemy_trap
+	addi $s5, $s1, 12
+	beq $s5, $s2, enemy_trap
 	move $s5, $s1
 	beq $s5, $s2, enemy_trap
 	addi $s5, $s1, 768
+	beq $s5, $s2, enemy_trap
+	addi $s5, $s1, 4
+	addi $s5, $s5, 768
+	beq $s5, $s2, enemy_trap
+	addi $s5, $s1, 8
+	addi $s5, $s5, 768
 	beq $s5, $s2, enemy_trap
 	
 	#check key input from users
@@ -209,12 +245,10 @@ li $t6, BASE_ADDRESS
 	move $a2, $s1
 	b erase_player
 	
-	b main_loop
-	
 	end: 
-	
 	li $t1, COLOR_WHITE
 	
+	#print O
 	li $t5,  2048
 	add $t5, $t5, $t0 
 	
@@ -309,12 +343,24 @@ erase_player:
 	sw $t7, 0($s0) 
 	sw $t7, 256($s0)
 	sw $t7, 512($s0)
+	sw $t7, 4($s0) #color blue
+	sw $t7, 260($s0)
+	sw $t7, 516($s0)
+	sw $t7, 8($s0) #color blue
+	sw $t7, 264($s0)
+	sw $t7, 520($s0)
 
 draw_player:
 	li $t7, COLOR_PLAYER_BLUE
 	sw $t7, 0($a2) #color blue
 	sw $t7, 256($a2)
 	sw $t7, 512($a2)
+	sw $t7, 4($a2) #color blue
+	sw $t7, 260($a2)
+	sw $t7, 516($a2)
+	sw $t7, 8($a2) #color blue
+	sw $t7, 264($a2)
+	sw $t7, 520($a2)
 	
 	sleep:
 	li $v0, 32
@@ -323,7 +369,29 @@ draw_player:
 	
 	b check_key
 	
-	b main_loop
+draw_left_edge_8: 
+	move $s0, $s1
+	addi $s1, $s1, -8
+	move $a2, $s1
+	b erase_player
+	
+draw_left_edge_4: 
+	move $s0, $s1
+	addi $s1, $s1, -4
+	move $a2, $s1
+	b erase_player
+
+draw_right_edge_4:
+	move $s0, $s1
+	addi $s1, $s1, 4
+	move $a2, $s1
+	b erase_player
+
+draw_right_edge_8:
+	move $s0, $s1
+	addi $s1, $s1, 8
+	move $a2, $s1
+	b erase_player
 
 falling: 
 	# no platform under the player, fall
@@ -347,50 +415,108 @@ respond_to_a:
 	div $s1, $t1
 	mfhi $t9
 	li $t2, 4
+	li $t3, 8
 	beq $t9, $zero, main_loop
-	beq $t9, $t2, main_loop
+	beq $t9, $t2, draw_left_edge_4
+	beq $t9, $t3, draw_left_edge_8
+	
+	#check if moving left collides into platform
+	move $t9, $s1
+	addi $t9, $t9, -8
+	lw $t9, 0($t9)
+	beq $t9, COLOR_MUSTARD, main_loop
+	
+	move $t9, $s1
+	addi $t9, $t9, -8
+	lw $t9, 256($t9)
+	beq $t9, COLOR_MUSTARD, main_loop
+	
+	move $t9, $s1
+	addi $t9, $t9, -8
+	lw $t9, 512($t9)
+	beq $t9, COLOR_MUSTARD, main_loop
+	
 	move $s0, $s1 #Store old position in $s0
 	addi $s1, $s1, -8
 	move $a2, $s1
 	b erase_player
-	b main_loop
 	
 respond_to_d:
 	li $t1, 256
-	li $t2, 252
-	li $t3, 248
+	li $t2, 244
+	li $t3, 240
+	li $t4, 236
 	div $s1, $t1
 	mfhi $t9
 	beq $t9, $t2, main_loop
-	beq $t9, $t3, main_loop
+	beq $t9, $t3, draw_right_edge_4
+	beq $t9, $t4, draw_right_edge_8
+	
+	#check if moving right collides into platform
+	move $t9, $s1
+	addi $t9, $t9, 16
+	lw $t9, 0($t9)
+	beq $t9, COLOR_MUSTARD, main_loop
+	
+	move $t9, $s1
+	addi $t9, $t9, 16
+	lw $t9, 256($t9)
+	beq $t9, COLOR_MUSTARD, main_loop
+	
+	move $t9, $s1
+	addi $t9, $t9, 16
+	lw $t9, 512($t9)
+	beq $t9, COLOR_MUSTARD, main_loop
+	
 	move $s0, $s1 #Store old position in $s0
 	addi $s1, $s1, 8
 	move $a2, $s1
 	b erase_player
-	b main_loop
 	
 respond_to_w:
 	ble $s1, $t0, main_loop #to check if the player is already in the first row, can't go more up
 	# if player is not standing on a platform, don't allow for jump
+	
 	addi $t4, $zero, 768
+	addi $t4, $t4, 8
 	add $t4, $t4, $s1
 	lw $t4, 0($t4)
-	bne $t4, 0xeeb882, main_loop
 	
+	addi $t3, $zero, 768
+	add $t3, $t3, $s1
+	lw $t3, 0($t3)
+		
+	beq $t4, COLOR_MUSTARD, jump_condition
+	beq $t3, COLOR_MUSTARD, jump_condition
+	
+	b main_loop #if not on platform, then will not jump
+	
+	jump_condition:
 	move $s0, $s1 #Store old position in $s0
 	add $s1, $s1, $s6
 	move $a2, $s1
 	b erase_player
-	b main_loop
-	
+
 respond_to_p:
 
 	b end
 	
 power_up:
 	addi $s6, $zero, HIGHER_JUMP
-	move $s3, $t0 #address of power up now changes to base address
 	#b check_key
+	
+erase_power_up:
+	li $t7, COLOR_BLACK
+	sw $t7, 0($s3) 
+	sw $t7, 256($s3) 
+	sw $t7, 252($s3) 
+	sw $t7, 260($s3) 
+	sw $t7, 512($s3) 
+	
+	move $s3, $t0 #address of power up now changes to base address
+	li $v0, 32
+	li $a0, 100
+	syscall
 
 power_up_hit_change_color:
 	move $s0, $s1
@@ -400,62 +526,66 @@ power_up_hit_change_color:
 	sw $t7, 0($s0) 
 	sw $t7, 256($s0)
 	sw $t7, 512($s0)
+	sw $t7, 4($s0) #color blue
+	sw $t7, 260($s0)
+	sw $t7, 516($s0)
+	sw $t7, 8($s0) #color blue
+	sw $t7, 264($s0)
+	sw $t7, 520($s0)
 	
 	li $v0, 32
-	li $a0, 100
+	li $a0, 400
 	syscall
 	
 	li $t7, COLOR_GREEN
 	sw $t7, 0($a2)
 	sw $t7, 256($a2)
 	sw $t7, 512($a2)
+	sw $t7, 4($a2) #color green
+	sw $t7, 260($a2)
+	sw $t7, 516($a2)
+	sw $t7, 8($a2) #color green
+	sw $t7, 264($a2)
+	sw $t7, 520($a2)
 	
 	li $v0, 32
-	li $a0, 100
+	li $a0, 400
 	syscall
 	
 	li $t7, COLOR_BLACK
 	sw $t7, 0($s0) 
 	sw $t7, 256($s0)
 	sw $t7, 512($s0)
+	sw $t7, 4($s0) #color blue
+	sw $t7, 260($s0)
+	sw $t7, 516($s0)
+	sw $t7, 8($s0) #color blue
+	sw $t7, 264($s0)
+	sw $t7, 520($s0)
 	
 	li $v0, 32
-	li $a0, 100
-	syscall
-	
-	li $t7, COLOR_GREEN
-	sw $t7, 0($a2)
-	sw $t7, 256($a2)
-	sw $t7, 512($a2)
-	
-	li $v0, 32
-	li $a0, 100
-	syscall
-	
-	li $t7, COLOR_BLACK
-	sw $t7, 0($s0) 
-	sw $t7, 256($s0)
-	sw $t7, 512($s0)
-	
-	li $v0, 32
-	li $a0, 100
-	syscall
-	
-	li $t7, COLOR_GREEN
-	sw $t7, 0($a2) 
-	sw $t7, 256($a2)
-	sw $t7, 512($a2)
-	
-	li $v0, 32
-	li $a0, 100
+	li $a0, 400
 	syscall
 	
 	b erase_player
 	
 enemy_trap: 
 	addi $s6, $zero, LOWEST_JUMP
-	move $s2, $t0  #address of enemy now changes to base address
+	
 	#b check_key
+erase_enemy_trap:
+	li $t7, COLOR_BLACK
+	sw $t7, -4($s2) 
+	sw $t7, 4($s2)	
+	sw $t7, 256($s2) 
+	sw $t7, 508($s2) 
+	sw $t7, 516($s2) 
+	
+	move $s2, $t0  #address of enemy now changes to base address
+	li $v0, 32
+	li $a0, 100
+	syscall
+
 	
 enemy_hit_change_color:
 	move $s0, $s1
@@ -465,58 +595,49 @@ enemy_hit_change_color:
 	sw $t7, 0($s0) 
 	sw $t7, 256($s0)
 	sw $t7, 512($s0)
+	sw $t7, 4($s0) #color 
+	sw $t7, 260($s0)
+	sw $t7, 516($s0)
+	sw $t7, 8($s0) #color 
+	sw $t7, 264($s0)
+	sw $t7, 520($s0)
+	
 	
 	li $v0, 32
-	li $a0, 100
+	li $a0, 400
 	syscall
 	
 	li $t7, COLOR_RED
 	sw $t7, 0($a2)
 	sw $t7, 256($a2)
 	sw $t7, 512($a2)
+	sw $t7, 4($a2) #color red
+	sw $t7, 260($a2)
+	sw $t7, 516($a2)
+	sw $t7, 8($a2) #color red
+	sw $t7, 264($a2)
+	sw $t7, 520($a2)
 	
 	li $v0, 32
-	li $a0, 100
+	li $a0, 400
 	syscall
 	
 	li $t7, COLOR_BLACK
 	sw $t7, 0($s0) 
 	sw $t7, 256($s0)
 	sw $t7, 512($s0)
+	sw $t7, 4($s0) #color 
+	sw $t7, 260($s0)
+	sw $t7, 516($s0)
+	sw $t7, 8($s0) #color 
+	sw $t7, 264($s0)
+	sw $t7, 520($s0)
 	
 	li $v0, 32
-	li $a0, 100
-	syscall
-	
-	li $t7, COLOR_RED
-	sw $t7, 0($a2)
-	sw $t7, 256($a2)
-	sw $t7, 512($a2)
-	
-	li $v0, 32
-	li $a0, 100
-	syscall
-	
-	li $t7, COLOR_BLACK
-	sw $t7, 0($s0) 
-	sw $t7, 256($s0)
-	sw $t7, 512($s0)
-	
-	li $v0, 32
-	li $a0, 100
-	syscall
-	
-	li $t7, COLOR_RED
-	sw $t7, 0($a2) 
-	sw $t7, 256($a2)
-	sw $t7, 512($a2)
-	
-	li $v0, 32
-	li $a0, 100
+	li $a0, 400
 	syscall
 	
 	b erase_player
-
 		
 fill: 
 	li $t4, COLOR_BLACK
@@ -525,6 +646,8 @@ fill:
 	beq $t6, $s7, main
 	addi $t6, $t6, 4
 	b fill
+	
+
 	
 	
 	
